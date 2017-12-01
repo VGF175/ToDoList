@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDoList</title>
+    <script src="jquery.min.js"></script>
+</head>
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+        background: #CDCDCD;
+    }
+
+    .head {
+        width: 100%;
+        height: 50px;
+        background: #323232;
+    }
+
+    .header {
+        width: 600px;
+        height: 50px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .logo {
+        width: 150px;
+        height: 50px;
+        line-height: 50px;
+        font-size: 24px;
+        color: #DDD;
+        text-align: center;
+    }
+    .header input {
+        width: 400px;
+        height: 24px;
+        margin: 13px auto;
+        border-radius: 5px;
+        outline-style: none;
+        border: none;
+        text-indent: 10px;
+    }
+
+    section {
+        width: 580px;
+        height: auto;
+        margin: 0 auto;
+        padding: 0 10px;
+        margin-top: 20px;
+    }
+
+    h2 {
+        width: 100%;
+        height: auto;
+        display: flex;
+        margin: 0 auto;
+        justify-content: space-between;
+    }
+
+    .doing span {
+        width: 20px;
+        height: 20px;
+        border-radius: 100%;
+        display: inline-block;
+        background: #E6E6FA;
+        line-height: 20px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .done span {
+        width: 20px;
+        height: 20px;
+        border-radius: 100%;
+        display: inline-block;
+        background: #E6E6FA;
+        line-height: 20px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    footer {
+        width: 100%;
+        height: 20px;
+        margin-top: 20px;
+        color: #666;
+        font-size: 14px;
+        text-align: center;
+    }
+    ul {
+        width: 100%;
+        height: auto;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    li {
+        width: 100%;
+        height: 32px;
+        border-radius: 6px;
+        border-left: 5px solid #999;
+        opacity: 1;
+        background: #fff;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .add {
+        width: 75%;
+        height: 100%;
+        font-size: 16px;
+        line-height: 30px;
+        color: #333;
+    }
+    input[type=checkbox]{
+        width: 20px;
+        height: 20px;
+    }
+</style>
+<body>
+    <div class="head">
+        <div class="header">
+            <div class="logo">ToDoList</div>
+            <input type="text" id="input" name="title" placeholder="添加todo">
+        </div>
+    </div>
+    <div class="box">
+        <section class="doing">
+            <h2>正在进行
+                <span class="span1">0</span>
+            </h2>
+            <ul>
+
+            </ul>
+        </section>
+        <section class="done">
+            <h2>已经完成
+                <span class="span2">0</span>
+            </h2>
+            <ul>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>
+<script>
+    let nextid = 7;
+    let database = [];
+    if (localStorage.data) {
+        database = JSON.parse(localStorage.data)
+    }
+
+    function render() {
+        let doing = [];
+        let done = [];
+        database.forEach(val => {
+            if (val.status) {
+                done.push(val);
+            }
+            else {
+                doing.push(val);
+            }
+        });
+        let str = "";
+        doing.forEach(val => {
+            str += `
+            <li id="${val.id}">
+            <input type="checkbox">
+            <p class="add">${val.content}</p>
+            <div class="del">--</div>
+            </li>
+            `;
+        });
+        $('.doing').find('ul').html(str).end().find('.span1').html(doing.length);
+
+
+        let atr = "";
+        done.forEach(val => {
+            atr += `
+                <li id="${val.id}">
+                <input type="checkbox" checked>
+                <p class="add">${val.content}</p>
+                <div class="del">--</div>
+                </li>`;
+        });
+        $('.done').find('ul').html(atr).end().find('.span2').html(done.length);
+    }
+
+    render();
+    localStorage.data = JSON.stringify(database);
+    localStorage.nextid = nextid;
+
+    //  转换
+    $('.box').on('click', '.del', function (e) {
+        e.preventDefault();
+        let id = $(this).closest('li').attr('id');
+        let index = database.findIndex(val => val.id == id);
+        database.splice(index, 1);
+        localStorage.data = JSON.stringify(database);
+        localStorage.nextid = nextid;
+        render();
+    }).on('click', 'p', function () {
+        let id = $(this).closest('li').attr('id');
+        let index = database.findIndex(val => val.id == id);
+        let input = $('<input>').val($(this).text());
+        $(this).html('').append(input);
+        input.focus();
+        input.change(function () {
+            database[index].content = $(this).val();
+            localStorage.data = JSON.stringify(database);
+            localStorage.nextid = nextid;
+            render();
+        })
+    }).on('click', 'input:checkbox', function () {
+        let id = $(this).closest('li').attr('id');
+        let index = database.findIndex(val => val.id == id);
+        database[index].status = !database[index].status;
+        localStorage.data = JSON.stringify(database);
+        localStorage.nextid = nextid;
+        render();
+    });
+
+    //input添加新内容
+    let input1 = $('.header').find('#input');
+    input1.on('keyup', function (e) {
+        if (e.which === 13) {
+            if ($(this).val()) {
+                database.unshift({id: nextid, content: $(this).val(), status: false});
+                nextid++;
+                localStorage.data = JSON.stringify(database);
+                localStorage.nextid = nextid;
+                render();
+            }
+        }
+    })
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
